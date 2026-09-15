@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Top Ludo - Real Money Ludo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(180deg, #0a0a1a 0%, #0d1b2a 50%, #000000 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            padding-bottom: 80px;
+            overflow-x: hidden;
+        }
+
+        /* ========== TOP BAR ========== */
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: rgba(10, 10, 26, 0.95);
+            backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.15);
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-area img {
+            height: 38px;
+            width: auto;
+        }
+
+        .logo-text {
+            font-size: 18px;
+            font-weight: 800;
+            background: linear-gradient(90deg, #FFD700, #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .top-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .balance-box {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 1px solid #FFD700;
+            border-radius: 20px;
+            padding: 6px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #FFD700;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .icon-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: #FFD700;
+        }
+
+        .badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #ff3b3b;
+            color: white;
+            font-size: 10px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* ========== MAIN CONTENT ========== */
+        .main-content {
+            padding: 80px 16px 20px;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .hero-logo {
+            width: 160px;
+            margin: 0 auto 12px;
+            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.4));
+        }
+
+        .hero h1 {
+            font-size: 26px;
+            font-weight: 800;
+            background: linear-gradient(90deg, #FFD700, #FFA500, #FFD700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 6px;
+        }
+
+        .hero p {
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 22px;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 16px;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: #000;
+        }
+
+        .btn-play {
+            background: linear-gradient(90deg, #FFD700, #FFA500);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.35);
+        }
+
+        .btn-deposit {
+            background: linear-gradient(90deg, #1e3a8a, #3b82f6);
+            color: white;
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        /* Feature Cards */
+        .features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 28px;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 16px 12px;
+            text-align: center;
+        }
+
+        .feature-card .icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .feature-card h3 {
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: #FFD700;
+        }
+
+        .feature-card p {
+            font-size: 11px;
+            color: #aaa;
+            line-height: 1.3;
+        }
+
+        /* ========== BOTTOM NAV ========== */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: rgba(10, 10, 26, 0.98);
+            backdrop-filter: blur(15px);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid rgba(255, 215, 0, 0.15);
+            z-index: 1000;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            text-decoration: none;
+            color: #888;
+            font-size: 11px;
+            font-weight: 500;
+            width: 70px;
+            padding: 6px 0;
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+
+        .nav-item svg {
+            width: 24px;
+            height: 24px;
+            fill: #888;
+        }
+
+        .nav-item.active {
+            color: #FFD700;
+        }
+
+        .nav-item.active svg {
+            fill: #FFD700;
+        }
+
+        .nav-item.matches {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #000;
+            transform: translateY(-12px);
+            box-shadow: 0 6px 18px rgba(255, 215, 0, 0.4);
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        .nav-item.matches svg {
+            fill: #000;
+            width: 28px;
+            height: 28px;
+        }
+
+        .nav-item.matches span {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ========== TOP BAR ========== -->
+    <div class="top-bar">
+        <div class="logo-area">
+            <img src="logo.png" alt="Top Ludo" onerror="this.style.display='none'">
+            <span class="logo-text">Top Ludo</span>
+        </div>
+
+        <div class="top-right">
+            <div class="balance-box">
+                ৳ <span id="balance">0.00</span>
+            </div>
+
+            <!-- Notification -->
+            <div class="icon-btn" onclick="alert('Notifications coming soon')">
+                <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+                <span class="badge">3</span>
+            </div>
+
+            <!-- Profile -->
+            <div class="icon-btn" onclick="alert('Profile page coming soon')">
+                <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== MAIN CONTENT ========== -->
+    <div class="main-content">
+        <div class="hero">
+            <img src="logo.png" alt="Top Ludo Logo" class="hero-logo" onerror="this.src='https://via.placeholder.com/160x160/FFD700/000000?text=TOP+LUDO'">
+            <h1>Top Ludo</h1>
+            <p>Real Money Ludo • Play & Win Cash</p>
+
+            <div class="btn-group">
+                <a href="#" class="btn btn-play" onclick="alert('Matches page will open')">
+                    🎲 Play Now
+                </a>
+                <a href="#" class="btn btn-deposit" onclick="alert('Deposit page will open')">
+                    💰 Deposit Now
+                </a>
+            </div>
+        </div>
+
+        <!-- Feature Cards -->
+        <div class="features">
+            <div class="feature-card">
+                <div class="icon">👥</div>
+                <h3>LIVE PLAYERS</h3>
+                <p>12,458 Playing Now</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon">⚡</div>
+                <h3>INSTANT DEPOSIT</h3>
+                <p>Deposit & Play Instantly</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon">🛡️</div>
+                <h3>FAIR PLAY</h3>
+                <p>100% Secure & Certified</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon">🏆</div>
+                <h3>WIN REAL CASH</h3>
+                <p>Withdraw Anytime</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== BOTTOM NAVIGATION ========== -->
+    <div class="bottom-nav">
+        <a href="#" class="nav-item" onclick="alert('Deposit page')">
+            <svg viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+            <span>Deposit</span>
+        </a>
+
+        <a href="#" class="nav-item" onclick="alert('Withdraw page')">
+            <svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+            <span>Withdraw</span>
+        </a>
+
+        <a href="#" class="nav-item matches" onclick="alert('Matches page')">
+            <svg viewBox="0 0 24 24"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+            <span>Matches</span>
+        </a>
+
+        <a href="#" class="nav-item" onclick="alert('Profile page')">
+            <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            <span>Profile</span>
+        </a>
+    </div>
+
+</body>
+</html>
