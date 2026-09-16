@@ -10,39 +10,81 @@ function generateOTP() {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
+/**
+ * Real OTP Email sender.
+ * - Only returns devOtp when ALLOW_DEV_OTP=true (for local testing)
+ * - In normal/production mode: never leaks OTP if email fails
+ */
 async function sendOTPEmail(email, otp) {
-  let user = (process.env.EMAIL_USER || '').trim();
-  let pass = (process.env.EMAIL_PASS || '').replace(/\s/g, '').replace(/"/g, '');
+  const user = (process.env.EMAIL_USER || '').trim();
+  // Remove all spaces and quotes from App Password
+  const pass = (process.env.EMAIL_PASS || '').replace(/\s+/g, '').replace(/["']/g, '');
+
+  const allowDev = process.env.ALLOW_DEV_OTP === 'true';
 
   if (!user || !pass) {
-    console.log('[DEV OTP] EMAIL not set. OTP for', email, '=', otp);
-    return { ok: false, dev: true, otp, reason: 'EMAIL_USER or EMAIL_PASS missing' };
+    console.log('[OTP] EMAIL_USER or EMAIL_PASS is missing');
+    if (allowDev) {
+      console.log('[DEV OTP] Allowed. OTP for', email, '=', otp);
+      return { ok: false, dev: true, otp, reason: 'EMAIL credentials missing (DEV mode)' };
+    }
+    throw new Error('Email system not configured. Please set EMAIL_USER and EMAIL_PASS in Environment Variables.');
   }
 
-  console.log('[MAIL] Sending OTP to', email, 'from', user);
+  console.log('[MAIL] Trying to send OTP to', email, 'from', user);
 
   const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 465,
     secure: true,
     auth: { user, pass },
-    connectionTimeout: 12000,
-    greetingTimeout: 12000,
-    socketTimeout: 15000
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 20000
   });
 
-  await transporter.sendMail({
-    from: `"Top Ludo" <${user}>`,
-    to: email,
-    subject: 'Top Ludo - OTP ' + otp,
-    text: 'Your Top Ludo OTP is: ' + otp + '\n\nValid for 5 minutes.',
-    html: '<div style="font-family:sans-serif;padding:20px;background:#0a0a1a;color:#fff;border-radius:12px;text-align:center"><h2 style="color:#FFD700">Top Ludo</h2><p style="font-size:36px;letter-spacing:8px;color:#FFD700;font-weight:bold">' + otp + '</p><p style="color:#888">Valid 5 minutes</p></div>'
-  });
+  try {
+    await transporter.sendMail({
+      from: `"Top Ludo" <${user}>`,
+      to: email,
+      subject: 'Top Ludo - Your OTP ' + otp,
+      text: `Your Top Ludo OTP is: ${otp}\n\nThis OTP is valid for 5 minutes.\nDo not share it with anyone.`,
+      html: `
+        <div style="font-family:sans-serif;padding:24px;background:#0a0a1a;color:#fff;border-radius:12px;text-align:center;max-width:400px;margin:0 auto">
+          <h2 style="color:#FFD700;margin:0 0 16px">Top Ludo</h2>
+          <p style="margin:0 0 8px;color:#ccc">Your One-Time Password</p>
+          <p style="font-size:36px;letter-spacing:10px;color:#FFD700;font-weight:bold;margin:16px 0">${otp}</p>
+          <p style="color:#888;font-size:13px;margin:0">Valid for 5 minutes only</p>
+        </div>
+      `
+    });
 
-  console.log('[MAIL] Sent OK to', email);
-  return { ok: true };
+    console.log('[MAIL] OTP sent successfully to', email);
+    return { ok: true };
+  } catch (err) {
+    console.error('[MAIL ERROR]', err.message);
+
+    // Common Gmail errors → clearer messages
+    let friendly = 'Failed to send OTP email.';
+    if (err.message.includes('Invalid login') || err.message.includes('Username and Password not accepted')) {
+      friendly = 'Gmail login failed. Please check EMAIL_USER and use a valid App Password (not normal password).';
+    } else if (err.message.includes('Less secure')) {
+      friendly = 'Less secure apps are blocked. Use Gmail App Password instead.';
+    } else if (err.code === 'ECONNECTION' || err.code === 'ETIMEDOUT') {
+      friendly = 'Could not connect to Gmail SMTP. Please try again later.';
+    }
+
+    if (allowDev) {
+      console.log('[DEV OTP] Email failed but DEV mode is on. OTP for', email, '=', otp);
+      return { ok: false, dev: true, otp, reason: friendly };
+    }
+
+    // Production / real mode → never leak OTP
+    throw new Error(friendly);
+  }
 }
 
+// ====================== REGISTER OTP ======================
 router.post('/register-otp', async (req, res) => {
   try {
     const { name, phone, email } = req.body;
@@ -65,30 +107,24 @@ router.post('/register-otp', async (req, res) => {
       expires: Date.now() + 5 * 60 * 1000
     });
 
-    try {
-      const result = await sendOTPEmail(emailLower, otp);
-      if (result.dev) {
-        return res.json({
-          message: 'Email not configured. Use OTP shown below.',
-          devOtp: otp
-        });
-      }
-      res.json({ message: 'OTP sent to your Gmail. Check Inbox + Spam.' });
-    } catch (mailErr) {
-      console.log('[MAIL ERROR]', mailErr.message);
-      // Allow continue with on-screen OTP
-      res.json({
-        message: 'Email send failed. Use OTP below to continue.',
-        devOtp: otp,
-        error: mailErr.message
+    const result = await sendOTPEmail(emailLower, otp);
+
+    if (result.dev) {
+      // Only happens when ALLOW_DEV_OTP=true
+      return res.json({
+        message: 'DEV MODE: Email not working. Use the OTP below.',
+        devOtp: result.otp
       });
     }
+
+    res.json({ message: 'OTP sent to your Gmail. Check Inbox + Spam folder.' });
   } catch (error) {
     console.log('register-otp error:', error.message);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error.message || 'Failed to send OTP' });
   }
 });
 
+// ====================== LOGIN OTP ======================
 router.post('/login-otp', async (req, res) => {
   try {
     const { email } = req.body;
@@ -107,26 +143,23 @@ router.post('/login-otp', async (req, res) => {
       expires: Date.now() + 5 * 60 * 1000
     });
 
-    try {
-      const result = await sendOTPEmail(emailLower, otp);
-      if (result.dev) {
-        return res.json({ message: 'Email not configured. Use OTP below.', devOtp: otp });
-      }
-      res.json({ message: 'OTP sent to your Gmail. Check Inbox + Spam.' });
-    } catch (mailErr) {
-      console.log('[MAIL ERROR]', mailErr.message);
-      res.json({
-        message: 'Email send failed. Use OTP below.',
-        devOtp: otp,
-        error: mailErr.message
+    const result = await sendOTPEmail(emailLower, otp);
+
+    if (result.dev) {
+      return res.json({
+        message: 'DEV MODE: Email not working. Use the OTP below.',
+        devOtp: result.otp
       });
     }
+
+    res.json({ message: 'OTP sent to your Gmail. Check Inbox + Spam folder.' });
   } catch (error) {
     console.log('login-otp error:', error.message);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error.message || 'Failed to send OTP' });
   }
 });
 
+// ====================== VERIFY OTP ======================
 router.post('/verify-otp', async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -138,16 +171,17 @@ router.post('/verify-otp', async (req, res) => {
     const stored = otpStore.get(emailLower);
 
     if (!stored) {
-      return res.status(400).json({ message: 'OTP expired. Request new one.' });
+      return res.status(400).json({ message: 'OTP expired or not found. Request a new one.' });
     }
     if (Date.now() > stored.expires) {
       otpStore.delete(emailLower);
-      return res.status(400).json({ message: 'OTP expired. Request new one.' });
+      return res.status(400).json({ message: 'OTP expired. Request a new one.' });
     }
     if (String(stored.otp) !== String(otp).trim()) {
       return res.status(400).json({ message: 'Invalid OTP' });
     }
 
+    // OTP is correct → remove it
     otpStore.delete(emailLower);
 
     let user;
@@ -186,6 +220,7 @@ router.post('/verify-otp', async (req, res) => {
   }
 });
 
+// ====================== PROFILE ======================
 router.get('/profile', async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
