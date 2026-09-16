@@ -11,37 +11,35 @@ function generateOTP() {
 }
 
 async function sendOTPEmail(email, otp) {
-  const user = process.env.EMAIL_USER;
-  const pass = process.env.EMAIL_PASS;
+  let user = (process.env.EMAIL_USER || '').trim();
+  let pass = (process.env.EMAIL_PASS || '').replace(/\s/g, '').replace(/"/g, '');
 
   if (!user || !pass) {
-    console.log('[DEV OTP] for', email, '=', otp);
-    return { ok: true, dev: true, otp };
+    console.log('[DEV OTP] EMAIL not set. OTP for', email, '=', otp);
+    return { ok: false, dev: true, otp, reason: 'EMAIL_USER or EMAIL_PASS missing' };
   }
 
+  console.log('[MAIL] Sending OTP to', email, 'from', user);
+
   const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: { user, pass },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
+    connectionTimeout: 12000,
+    greetingTimeout: 12000,
     socketTimeout: 15000
   });
 
   await transporter.sendMail({
     from: `"Top Ludo" <${user}>`,
     to: email,
-    subject: 'Top Ludo - Your OTP Code',
-    text: `Your Top Ludo OTP is: ${otp}\n\nValid for 5 minutes.\nDo not share this code.`,
-    html: `
-      <div style="font-family:sans-serif;max-width:400px;margin:0 auto;padding:20px;background:#0a0a1a;color:#fff;border-radius:12px;">
-        <h2 style="color:#FFD700;text-align:center;">Top Ludo</h2>
-        <p style="text-align:center;color:#aaa;">Your verification code</p>
-        <p style="font-size:32px;font-weight:bold;letter-spacing:8px;text-align:center;color:#FFD700;margin:24px 0;">${otp}</p>
-        <p style="text-align:center;color:#888;font-size:13px;">Valid for 5 minutes. Do not share this code.</p>
-      </div>
-    `
+    subject: 'Top Ludo - OTP ' + otp,
+    text: 'Your Top Ludo OTP is: ' + otp + '\n\nValid for 5 minutes.',
+    html: '<div style="font-family:sans-serif;padding:20px;background:#0a0a1a;color:#fff;border-radius:12px;text-align:center"><h2 style="color:#FFD700">Top Ludo</h2><p style="font-size:36px;letter-spacing:8px;color:#FFD700;font-weight:bold">' + otp + '</p><p style="color:#888">Valid 5 minutes</p></div>'
   });
 
+  console.log('[MAIL] Sent OK to', email);
   return { ok: true };
 }
 
@@ -49,7 +47,7 @@ router.post('/register-otp', async (req, res) => {
   try {
     const { name, phone, email } = req.body;
     if (!name || !phone || !email) {
-      return res.status(400).json({ message: 'Name, phone and email are required' });
+      return res.status(400).json({ message: 'Name, phone and email required' });
     }
 
     const emailLower = email.trim().toLowerCase();
@@ -69,33 +67,32 @@ router.post('/register-otp', async (req, res) => {
 
     try {
       const result = await sendOTPEmail(emailLower, otp);
-      const response = { message: 'OTP sent to your Gmail' };
       if (result.dev) {
-        response.devOtp = otp;
-        response.message = 'Email not configured. Use Dev OTP below.';
+        return res.json({
+          message: 'Email not configured. Use OTP shown below.',
+          devOtp: otp
+        });
       }
-      res.json(response);
+      res.json({ message: 'OTP sent to your Gmail. Check Inbox + Spam.' });
     } catch (mailErr) {
-      console.log('Email send failed:', mailErr.message);
-      // Still allow testing with OTP in response if mail fails
+      console.log('[MAIL ERROR]', mailErr.message);
+      // Allow continue with on-screen OTP
       res.json({
-        message: 'Email failed. Use Dev OTP (check spam or fix EMAIL_PASS).',
+        message: 'Email send failed. Use OTP below to continue.',
         devOtp: otp,
         error: mailErr.message
       });
     }
   } catch (error) {
     console.log('register-otp error:', error.message);
-    res.status(500).json({ message: 'Failed: ' + error.message });
+    res.status(500).json({ message: error.message });
   }
 });
 
 router.post('/login-otp', async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ message: 'Email is required' });
-    }
+    if (!email) return res.status(400).json({ message: 'Email required' });
 
     const emailLower = email.trim().toLowerCase();
     const user = await User.findOne({ email: emailLower });
@@ -112,23 +109,21 @@ router.post('/login-otp', async (req, res) => {
 
     try {
       const result = await sendOTPEmail(emailLower, otp);
-      const response = { message: 'OTP sent to your Gmail' };
       if (result.dev) {
-        response.devOtp = otp;
-        response.message = 'Email not configured. Use Dev OTP below.';
+        return res.json({ message: 'Email not configured. Use OTP below.', devOtp: otp });
       }
-      res.json(response);
+      res.json({ message: 'OTP sent to your Gmail. Check Inbox + Spam.' });
     } catch (mailErr) {
-      console.log('Email send failed:', mailErr.message);
+      console.log('[MAIL ERROR]', mailErr.message);
       res.json({
-        message: 'Email failed. Use Dev OTP.',
+        message: 'Email send failed. Use OTP below.',
         devOtp: otp,
         error: mailErr.message
       });
     }
   } catch (error) {
     console.log('login-otp error:', error.message);
-    res.status(500).json({ message: 'Failed: ' + error.message });
+    res.status(500).json({ message: error.message });
   }
 });
 
@@ -136,18 +131,18 @@ router.post('/verify-otp', async (req, res) => {
   try {
     const { email, otp } = req.body;
     if (!email || !otp) {
-      return res.status(400).json({ message: 'Email and OTP are required' });
+      return res.status(400).json({ message: 'Email and OTP required' });
     }
 
     const emailLower = email.trim().toLowerCase();
     const stored = otpStore.get(emailLower);
 
     if (!stored) {
-      return res.status(400).json({ message: 'OTP expired or not found. Request a new one.' });
+      return res.status(400).json({ message: 'OTP expired. Request new one.' });
     }
     if (Date.now() > stored.expires) {
       otpStore.delete(emailLower);
-      return res.status(400).json({ message: 'OTP expired. Request a new one.' });
+      return res.status(400).json({ message: 'OTP expired. Request new one.' });
     }
     if (String(stored.otp) !== String(otp).trim()) {
       return res.status(400).json({ message: 'Invalid OTP' });
@@ -165,9 +160,7 @@ router.post('/verify-otp', async (req, res) => {
       await user.save();
     } else {
       user = await User.findOne({ email: emailLower });
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
+      if (!user) return res.status(404).json({ message: 'User not found' });
     }
 
     const token = jwt.sign(
@@ -189,7 +182,7 @@ router.post('/verify-otp', async (req, res) => {
     });
   } catch (error) {
     console.log('verify-otp error:', error.message);
-    res.status(500).json({ message: 'Server error: ' + error.message });
+    res.status(500).json({ message: error.message });
   }
 });
 

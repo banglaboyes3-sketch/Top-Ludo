@@ -167,8 +167,12 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Failed');
         let msg = data.message;
-        if (data.devOtp) msg += ' (Dev OTP: ' + data.devOtp + ')';
-        showMsg(msg, data.devOtp ? 'info' : 'success');
+        if (data.devOtp) {
+          msg += '\n\n👉 OTP: ' + data.devOtp;
+          showMsg(msg, 'info');
+        } else {
+          showMsg(msg, 'success');
+        }
         showOTPStep(email);
       } catch (e) {
         showMsg(e.name === 'AbortError' ? 'Timeout - EMAIL settings check করুন বা আবার try করুন' : e.message, 'error');
@@ -199,8 +203,12 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Failed');
         let msg = data.message;
-        if (data.devOtp) msg += ' (Dev OTP: ' + data.devOtp + ')';
-        showMsg(msg, data.devOtp ? 'info' : 'success');
+        if (data.devOtp) {
+          msg += '\n\n👉 OTP: ' + data.devOtp;
+          showMsg(msg, 'info');
+        } else {
+          showMsg(msg, 'success');
+        }
         showOTPStep(email);
       } catch (e) {
         showMsg(e.name === 'AbortError' ? 'Timeout - EMAIL settings check করুন বা আবার try করুন' : e.message, 'error');
