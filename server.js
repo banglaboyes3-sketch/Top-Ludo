@@ -15,10 +15,10 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files (frontend)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Routes
-const authRoutes = require('./routes/auth');
-const adminRoutes = require('./routes/admin');
-const walletRoutes = require('./routes/wallet');
+// Routes (same folder - no subfolders)
+const authRoutes = require('./auth');
+const adminRoutes = require('./admin');
+const walletRoutes = require('./wallet');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
@@ -34,16 +34,16 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Top Ludo server is running' });
 });
 
-// Connect to MongoDB (optional - will work without DB for now)
+// Connect to MongoDB
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/topludo';
 
 mongoose.connect(MONGODB_URI)
-  .then(() => console.log('✅ MongoDB connected'))
+  .then(() => console.log('MongoDB connected'))
   .catch((err) => {
-    console.log('⚠️  MongoDB not connected (running without database):', err.message);
+    console.log('MongoDB not connected:', err.message);
   });
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Top Ludo server running on port ${PORT}`);
+  console.log('Top Ludo server running on port ' + PORT);
 });
