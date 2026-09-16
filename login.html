@@ -156,7 +156,7 @@
       hideMsg();
       try {
         const ctrl = new AbortController();
-        const timer = setTimeout(() => ctrl.abort(), 20000);
+        const timer = setTimeout(() => ctrl.abort(), 12000);
         const res = await fetch(API + '/login-otp', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -192,7 +192,7 @@
       hideMsg();
       try {
         const ctrl = new AbortController();
-        const timer = setTimeout(() => ctrl.abort(), 20000);
+        const timer = setTimeout(() => ctrl.abort(), 12000);
         const res = await fetch(API + '/register-otp', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

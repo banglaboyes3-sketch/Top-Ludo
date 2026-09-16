@@ -11,13 +11,10 @@ function generateOTP() {
 }
 
 /**
- * Real OTP Email sender.
- * - Only returns devOtp when ALLOW_DEV_OTP=true (for local testing)
- * - In normal/production mode: never leaks OTP if email fails
+ * Real OTP Email sender - faster timeout version
  */
 async function sendOTPEmail(email, otp) {
   const user = (process.env.EMAIL_USER || '').trim();
-  // Remove all spaces and quotes from App Password
   const pass = (process.env.EMAIL_PASS || '').replace(/\s+/g, '').replace(/["']/g, '');
 
   const allowDev = process.env.ALLOW_DEV_OTP === 'true';
@@ -33,14 +30,16 @@ async function sendOTPEmail(email, otp) {
 
   console.log('[MAIL] Trying to send OTP to', email, 'from', user);
 
+  // Port 587 is usually more reliable on Render / cloud hosts
   const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
+    port: 587,
+    secure: false,          // true for 465, false for 587
+    requireTLS: true,
     auth: { user, pass },
-    connectionTimeout: 15000,
-    greetingTimeout: 15000,
-    socketTimeout: 20000
+    connectionTimeout: 8000,   // 8 seconds (faster fail)
+    greetingTimeout: 8000,
+    socketTimeout: 10000
   });
 
   try {
@@ -64,14 +63,13 @@ async function sendOTPEmail(email, otp) {
   } catch (err) {
     console.error('[MAIL ERROR]', err.message);
 
-    // Common Gmail errors → clearer messages
-    let friendly = 'Failed to send OTP email.';
-    if (err.message.includes('Invalid login') || err.message.includes('Username and Password not accepted')) {
-      friendly = 'Gmail login failed. Please check EMAIL_USER and use a valid App Password (not normal password).';
+    let friendly = 'Failed to send OTP email. Please try again.';
+    if (err.message.includes('Invalid login') || err.message.includes('Username and Password not accepted') || err.message.includes('BadCredentials')) {
+      friendly = 'Gmail login failed. Check EMAIL_USER and use a valid App Password.';
     } else if (err.message.includes('Less secure')) {
-      friendly = 'Less secure apps are blocked. Use Gmail App Password instead.';
-    } else if (err.code === 'ECONNECTION' || err.code === 'ETIMEDOUT') {
-      friendly = 'Could not connect to Gmail SMTP. Please try again later.';
+      friendly = 'Less secure apps blocked. Use Gmail App Password.';
+    } else if (err.code === 'ECONNECTION' || err.code === 'ETIMEDOUT' || err.message.includes('timeout') || err.message.includes('ECONNREFUSED')) {
+      friendly = 'Could not connect to Gmail. Please try again in a few seconds.';
     }
 
     if (allowDev) {
@@ -79,7 +77,6 @@ async function sendOTPEmail(email, otp) {
       return { ok: false, dev: true, otp, reason: friendly };
     }
 
-    // Production / real mode → never leak OTP
     throw new Error(friendly);
   }
 }
@@ -110,7 +107,6 @@ router.post('/register-otp', async (req, res) => {
     const result = await sendOTPEmail(emailLower, otp);
 
     if (result.dev) {
-      // Only happens when ALLOW_DEV_OTP=true
       return res.json({
         message: 'DEV MODE: Email not working. Use the OTP below.',
         devOtp: result.otp
@@ -181,7 +177,6 @@ router.post('/verify-otp', async (req, res) => {
       return res.status(400).json({ message: 'Invalid OTP' });
     }
 
-    // OTP is correct → remove it
     otpStore.delete(emailLower);
 
     let user;
