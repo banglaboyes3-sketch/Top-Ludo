@@ -306,7 +306,7 @@
             </div>
 
             <!-- Profile -->
-            <div class="icon-btn" onclick="alert('Profile page coming soon')">
+            <div class="icon-btn" onclick="goProfile()">
                 <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
             </div>
         </div>
@@ -371,11 +371,48 @@
             <span>Matches</span>
         </a>
 
-        <a href="#" class="nav-item" onclick="alert('Profile page')">
+        <a href="#" class="nav-item" onclick="goProfile()">
             <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
             <span>Profile</span>
         </a>
     </div>
 
+
+<script>
+function goProfile() {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    window.location.href = '/login';
+    return;
+  }
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const logout = confirm('Logged in as: ' + (user.name || '') + '\n' + (user.email || '') + '\nBalance: ৳' + (user.balance || 0) + '\n\nLogout?');
+  if (logout) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    location.reload();
+  }
+}
+async function loadUser() {
+  const token = localStorage.getItem('token');
+  if (!token) return;
+  try {
+    const res = await fetch('/api/auth/profile', {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    if (!res.ok) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      return;
+    }
+    const user = await res.json();
+    localStorage.setItem('user', JSON.stringify(user));
+    const bal = document.getElementById('balance');
+    if (bal) bal.textContent = Number(user.balance || 0).toFixed(2);
+  } catch (e) {}
+}
+loadUser();
+</script>
 </body>
+
 </html>

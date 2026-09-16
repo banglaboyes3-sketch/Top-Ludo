@@ -18,8 +18,8 @@ const withdrawRequestSchema = new mongoose.Schema({
 
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  phone: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
+  phone: { type: String, required: true },
+  email: { type: String, required: true, unique: true, lowercase: true },
   balance: { type: Number, default: 0 },
   depositRequests: [depositRequestSchema],
   withdrawRequests: [withdrawRequestSchema],

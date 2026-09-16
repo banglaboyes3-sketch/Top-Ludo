@@ -55,6 +55,10 @@ app.get('/', (req, res) => sendHtml(res, 'index.html'));
 app.get('/admin', (req, res) => sendHtml(res, 'admin.html'));
 app.get('/admin.html', (req, res) => sendHtml(res, 'admin.html'));
 
+app.get('/login', (req, res) => sendHtml(res, 'login.html'));
+app.get('/login.html', (req, res) => sendHtml(res, 'login.html'));
+app.get('/register', (req, res) => sendHtml(res, 'login.html'));
+
 // Health
 app.get('/health', (req, res) => {
   res.json({
