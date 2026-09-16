@@ -59,6 +59,7 @@
 </head>
 <body>
   <div class="box">
+    <div style="text-align:center;margin-bottom:12px;"><img src="/logo.png" alt="Top Ludo" style="width:100px;height:100px;object-fit:contain;border-radius:16px;"></div>
     <h1>Top Ludo</h1>
     <p class="sub">Gmail OTP দিয়ে লগইন / রেজিস্টার</p>
 
@@ -154,11 +155,15 @@
       btn.textContent = 'পাঠানো হচ্ছে...';
       hideMsg();
       try {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 20000);
         const res = await fetch(API + '/login-otp', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email })
+          body: JSON.stringify({ email }),
+          signal: ctrl.signal
         });
+        clearTimeout(timer);
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Failed');
         let msg = data.message;
@@ -166,7 +171,7 @@
         showMsg(msg, data.devOtp ? 'info' : 'success');
         showOTPStep(email);
       } catch (e) {
-        showMsg(e.message, 'error');
+        showMsg(e.name === 'AbortError' ? 'Timeout - EMAIL settings check করুন বা আবার try করুন' : e.message, 'error');
       }
       btn.disabled = false;
       btn.textContent = 'OTP পাঠান';
@@ -182,11 +187,15 @@
       btn.textContent = 'পাঠানো হচ্ছে...';
       hideMsg();
       try {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 20000);
         const res = await fetch(API + '/register-otp', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, phone, email })
+          body: JSON.stringify({ name, phone, email }),
+          signal: ctrl.signal
         });
+        clearTimeout(timer);
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Failed');
         let msg = data.message;
@@ -194,7 +203,7 @@
         showMsg(msg, data.devOtp ? 'info' : 'success');
         showOTPStep(email);
       } catch (e) {
-        showMsg(e.message, 'error');
+        showMsg(e.name === 'AbortError' ? 'Timeout - EMAIL settings check করুন বা আবার try করুন' : e.message, 'error');
       }
       btn.disabled = false;
       btn.textContent = 'OTP পাঠান';
@@ -219,7 +228,7 @@
         showMsg(data.message + ' — রিডাইরেক্ট হচ্ছে...', 'success');
         setTimeout(() => { window.location.href = '/'; }, 800);
       } catch (e) {
-        showMsg(e.message, 'error');
+        showMsg(e.name === 'AbortError' ? 'Timeout - EMAIL settings check করুন বা আবার try করুন' : e.message, 'error');
         btn.disabled = false;
         btn.textContent = 'Verify & Continue';
       }

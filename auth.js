@@ -4,7 +4,6 @@ const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const User = require('./User');
 
-// Temporary OTP store: email -> { otp, name, phone, type, expires }
 const otpStore = new Map();
 
 function generateOTP() {
@@ -16,13 +15,16 @@ async function sendOTPEmail(email, otp) {
   const pass = process.env.EMAIL_PASS;
 
   if (!user || !pass) {
-    console.log('EMAIL_USER/EMAIL_PASS not set. OTP for', email, '=', otp);
+    console.log('[DEV OTP] for', email, '=', otp);
     return { ok: true, dev: true, otp };
   }
 
   const transporter = nodemailer.createTransport({
     service: 'gmail',
-    auth: { user, pass }
+    auth: { user, pass },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000
   });
 
   await transporter.sendMail({
@@ -43,7 +45,6 @@ async function sendOTPEmail(email, otp) {
   return { ok: true };
 }
 
-// Send OTP - Register
 router.post('/register-otp', async (req, res) => {
   try {
     const { name, phone, email } = req.body;
@@ -66,17 +67,29 @@ router.post('/register-otp', async (req, res) => {
       expires: Date.now() + 5 * 60 * 1000
     });
 
-    const result = await sendOTPEmail(emailLower, otp);
-    const response = { message: 'OTP sent to your Gmail' };
-    if (result.dev) response.devOtp = otp; // only when email not configured
-    res.json(response);
+    try {
+      const result = await sendOTPEmail(emailLower, otp);
+      const response = { message: 'OTP sent to your Gmail' };
+      if (result.dev) {
+        response.devOtp = otp;
+        response.message = 'Email not configured. Use Dev OTP below.';
+      }
+      res.json(response);
+    } catch (mailErr) {
+      console.log('Email send failed:', mailErr.message);
+      // Still allow testing with OTP in response if mail fails
+      res.json({
+        message: 'Email failed. Use Dev OTP (check spam or fix EMAIL_PASS).',
+        devOtp: otp,
+        error: mailErr.message
+      });
+    }
   } catch (error) {
     console.log('register-otp error:', error.message);
-    res.status(500).json({ message: 'Failed to send OTP', error: error.message });
+    res.status(500).json({ message: 'Failed: ' + error.message });
   }
 });
 
-// Send OTP - Login
 router.post('/login-otp', async (req, res) => {
   try {
     const { email } = req.body;
@@ -97,17 +110,28 @@ router.post('/login-otp', async (req, res) => {
       expires: Date.now() + 5 * 60 * 1000
     });
 
-    const result = await sendOTPEmail(emailLower, otp);
-    const response = { message: 'OTP sent to your Gmail' };
-    if (result.dev) response.devOtp = otp;
-    res.json(response);
+    try {
+      const result = await sendOTPEmail(emailLower, otp);
+      const response = { message: 'OTP sent to your Gmail' };
+      if (result.dev) {
+        response.devOtp = otp;
+        response.message = 'Email not configured. Use Dev OTP below.';
+      }
+      res.json(response);
+    } catch (mailErr) {
+      console.log('Email send failed:', mailErr.message);
+      res.json({
+        message: 'Email failed. Use Dev OTP.',
+        devOtp: otp,
+        error: mailErr.message
+      });
+    }
   } catch (error) {
     console.log('login-otp error:', error.message);
-    res.status(500).json({ message: 'Failed to send OTP', error: error.message });
+    res.status(500).json({ message: 'Failed: ' + error.message });
   }
 });
 
-// Verify OTP
 router.post('/verify-otp', async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -165,11 +189,10 @@ router.post('/verify-otp', async (req, res) => {
     });
   } catch (error) {
     console.log('verify-otp error:', error.message);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error: ' + error.message });
   }
 });
 
-// Profile
 router.get('/profile', async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
