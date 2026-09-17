@@ -26,6 +26,16 @@
     .msg { padding: 10px; border-radius: 8px; margin: 10px 0; }
     .error { background: #7f1d1d; }
     .success { background: #14532d; }
+    .form-box { background: #0f0f1a; padding: 16px; border-radius: 10px; margin-bottom: 16px; border: 1px solid #333; }
+    .form-box label { display: block; font-size: 13px; color: #aaa; margin-top: 10px; margin-bottom: 4px; }
+    .form-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .form-row > div { flex: 1; min-width: 180px; }
+    .method-logo { width: 36px; height: 36px; object-fit: contain; border-radius: 6px; background: #fff; }
+    .status-on { color: #22c55e; font-weight: bold; }
+    .status-off { color: #ef4444; font-weight: bold; }
+    .btn-edit { background: #3b82f6; color: #fff; }
+    .btn-delete { background: #ef4444; color: #fff; }
+    textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #333; background: #0f0f1a; color: #fff; min-height: 70px; resize: vertical; }
   </style>
 </head>
 <body>
@@ -47,6 +57,7 @@
         <div class="tab active" onclick="showTab('deposits')">Deposits</div>
         <div class="tab" onclick="showTab('withdraws')">Withdraws</div>
         <div class="tab" onclick="showTab('users')">Users</div>
+        <div class="tab" onclick="showTab('settings')">Deposit Settings</div>
         <button class="btn-sm" onclick="logout()" style="margin-left:auto">Logout</button>
       </div>
 
@@ -61,6 +72,52 @@
       <div id="usersTab" class="hidden">
         <h3>All Users</h3>
         <div id="usersList">Loading...</div>
+      </div>
+
+      <!-- Deposit Settings Tab -->
+      <div id="settingsTab" class="hidden">
+        <h3>Deposit Settings</h3>
+        <p style="color:#aaa;font-size:13px;margin-bottom:12px;">এখানে bKash, Nagad, Rocket ইত্যাদি পেমেন্ট মেথড যোগ/এডিট/ডিলিট করতে পারবেন।</p>
+
+        <!-- Add / Edit Form -->
+        <div class="form-box">
+          <h4 id="formTitle" style="color:#FFD700;margin-bottom:8px;">নতুন মেথড যোগ করুন</h4>
+          <input type="hidden" id="editId" value="">
+          <div class="form-row">
+            <div>
+              <label>নাম (Name) *</label>
+              <input type="text" id="methodName" placeholder="bKash / Nagad / Rocket">
+            </div>
+            <div>
+              <label>নম্বর (Number) *</label>
+              <input type="text" id="methodNumber" placeholder="01XXXXXXXXX">
+            </div>
+          </div>
+          <div class="form-row">
+            <div>
+              <label>লোগো URL (Logo URL)</label>
+              <input type="text" id="methodLogo" placeholder="https://example.com/logo.png">
+            </div>
+            <div>
+              <label>স্ট্যাটাস</label>
+              <select id="methodActive" style="width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #333;background:#0f0f1a;color:#fff;">
+                <option value="true">Active (চালু)</option>
+                <option value="false">Inactive (বন্ধ)</option>
+              </select>
+            </div>
+          </div>
+          <label>ইনস্ট্রাকশন (Instructions)</label>
+          <textarea id="methodInstructions" placeholder="যেমন: শুধু Personal নম্বরে টাকা পাঠাবেন। Send Money করবেন।"></textarea>
+          <div style="display:flex;gap:10px;margin-top:8px;">
+            <button onclick="saveMethod()" id="saveBtn">যোগ করুন</button>
+            <button onclick="resetForm()" class="btn-sm" style="background:#555;color:#fff;display:none;" id="cancelBtn">Cancel</button>
+          </div>
+          <div id="settingsMsg"></div>
+        </div>
+
+        <!-- Methods List -->
+        <h4 style="margin-top:20px;color:#FFD700;">বর্তমান মেথডসমূহ</h4>
+        <div id="methodsList">Loading...</div>
       </div>
     </div>
   </div>
@@ -108,10 +165,12 @@
       document.getElementById('depositsTab').classList.add('hidden');
       document.getElementById('withdrawsTab').classList.add('hidden');
       document.getElementById('usersTab').classList.add('hidden');
+      document.getElementById('settingsTab').classList.add('hidden');
       document.getElementById(name + 'Tab').classList.remove('hidden');
       if (name === 'deposits') loadDeposits();
       if (name === 'withdraws') loadWithdraws();
       if (name === 'users') loadUsers();
+      if (name === 'settings') loadMethods();
     }
 
     async function loadDeposits() {
@@ -174,6 +233,128 @@
         el.innerHTML = `<table><tr><th>Name</th><th>Phone</th><th>Balance</th><th>Joined</th></tr>
           ${data.map(u => `<tr><td>${u.name}</td><td>${u.phone}</td><td>৳${u.balance}</td><td>${new Date(u.createdAt).toLocaleDateString()}</td></tr>`).join('')}</table>`;
       } catch (e) { el.innerHTML = '<p class="error">Failed to load</p>'; }
+    }
+
+    // ====================== DEPOSIT SETTINGS ======================
+
+    async function loadMethods() {
+      const el = document.getElementById('methodsList');
+      try {
+        const res = await fetch(API + '/deposit-methods', { headers: { Authorization: 'Bearer ' + token } });
+        const data = await res.json();
+        if (!data.length) {
+          el.innerHTML = '<p style="color:#aaa;margin-top:10px;">এখনো কোনো মেথড যোগ করা হয়নি।</p>';
+          return;
+        }
+        el.innerHTML = `<table>
+          <tr>
+            <th>Logo</th>
+            <th>Name</th>
+            <th>Number</th>
+            <th>Instructions</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+          ${data.map(m => `
+            <tr>
+              <td>${m.logo ? `<img src="${m.logo}" class="method-logo" onerror="this.style.display='none'">` : '-'}</td>
+              <td><strong>${m.name}</strong></td>
+              <td>${m.number}</td>
+              <td style="max-width:200px;font-size:12px;color:#ccc;">${m.instructions || '-'}</td>
+              <td class="${m.isActive ? 'status-on' : 'status-off'}">${m.isActive ? 'Active' : 'Inactive'}</td>
+              <td>
+                <button class="btn-sm btn-edit" onclick='editMethod(${JSON.stringify(m)})'>Edit</button>
+                <button class="btn-sm btn-delete" onclick="deleteMethod('${m._id}')">Delete</button>
+              </td>
+            </tr>
+          `).join('')}
+        </table>`;
+      } catch (e) {
+        el.innerHTML = '<p class="error">Failed to load methods</p>';
+      }
+    }
+
+    function resetForm() {
+      document.getElementById('editId').value = '';
+      document.getElementById('methodName').value = '';
+      document.getElementById('methodNumber').value = '';
+      document.getElementById('methodLogo').value = '';
+      document.getElementById('methodInstructions').value = '';
+      document.getElementById('methodActive').value = 'true';
+      document.getElementById('formTitle').textContent = 'নতুন মেথড যোগ করুন';
+      document.getElementById('saveBtn').textContent = 'যোগ করুন';
+      document.getElementById('cancelBtn').style.display = 'none';
+      document.getElementById('settingsMsg').innerHTML = '';
+    }
+
+    function editMethod(m) {
+      document.getElementById('editId').value = m._id;
+      document.getElementById('methodName').value = m.name || '';
+      document.getElementById('methodNumber').value = m.number || '';
+      document.getElementById('methodLogo').value = m.logo || '';
+      document.getElementById('methodInstructions').value = m.instructions || '';
+      document.getElementById('methodActive').value = m.isActive ? 'true' : 'false';
+      document.getElementById('formTitle').textContent = 'মেথড এডিট করুন';
+      document.getElementById('saveBtn').textContent = 'আপডেট করুন';
+      document.getElementById('cancelBtn').style.display = 'inline-block';
+      document.getElementById('settingsMsg').innerHTML = '';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function saveMethod() {
+      const id = document.getElementById('editId').value;
+      const name = document.getElementById('methodName').value.trim();
+      const number = document.getElementById('methodNumber').value.trim();
+      const logo = document.getElementById('methodLogo').value.trim();
+      const instructions = document.getElementById('methodInstructions').value.trim();
+      const isActive = document.getElementById('methodActive').value === 'true';
+      const msg = document.getElementById('settingsMsg');
+
+      if (!name || !number) {
+        msg.innerHTML = '<div class="msg error">নাম এবং নম্বর আবশ্যক</div>';
+        return;
+      }
+
+      try {
+        let res;
+        if (id) {
+          // Update
+          res = await fetch(API + '/deposit-methods/' + id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+            body: JSON.stringify({ name, number, logo, instructions, isActive })
+          });
+        } else {
+          // Add
+          res = await fetch(API + '/deposit-methods', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+            body: JSON.stringify({ name, number, logo, instructions, isActive })
+          });
+        }
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Failed');
+        msg.innerHTML = `<div class="msg success">${data.message}</div>`;
+        resetForm();
+        loadMethods();
+      } catch (e) {
+        msg.innerHTML = `<div class="msg error">${e.message}</div>`;
+      }
+    }
+
+    async function deleteMethod(id) {
+      if (!confirm('আপনি কি এই মেথড ডিলিট করতে চান?')) return;
+      try {
+        const res = await fetch(API + '/deposit-methods/' + id, {
+          method: 'DELETE',
+          headers: { Authorization: 'Bearer ' + token }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Failed');
+        loadMethods();
+      } catch (e) {
+        alert(e.message);
+      }
     }
   </script>
 </body>

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const User = require('./User');
+const DepositMethod = require('./DepositMethod');
 
 // Admin Login
 router.post('/login', async (req, res) => {
@@ -145,6 +146,70 @@ router.get('/users', adminAuth, async (req, res) => {
   try {
     const users = await User.find().select('-password');
     res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// ====================== DEPOSIT SETTINGS ======================
+
+// Get all deposit methods
+router.get('/deposit-methods', adminAuth, async (req, res) => {
+  try {
+    const methods = await DepositMethod.find().sort({ createdAt: -1 });
+    res.json(methods);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Add new deposit method
+router.post('/deposit-methods', adminAuth, async (req, res) => {
+  try {
+    const { name, number, logo, instructions, isActive } = req.body;
+    if (!name || !number) {
+      return res.status(400).json({ message: 'Name and Number are required' });
+    }
+    const method = new DepositMethod({
+      name: name.trim(),
+      number: number.trim(),
+      logo: (logo || '').trim(),
+      instructions: (instructions || '').trim(),
+      isActive: isActive !== false
+    });
+    await method.save();
+    res.json({ message: 'Deposit method added successfully', method });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Update deposit method
+router.put('/deposit-methods/:id', adminAuth, async (req, res) => {
+  try {
+    const { name, number, logo, instructions, isActive } = req.body;
+    const method = await DepositMethod.findById(req.params.id);
+    if (!method) return res.status(404).json({ message: 'Method not found' });
+
+    if (name) method.name = name.trim();
+    if (number) method.number = number.trim();
+    if (logo !== undefined) method.logo = (logo || '').trim();
+    if (instructions !== undefined) method.instructions = (instructions || '').trim();
+    if (isActive !== undefined) method.isActive = isActive;
+
+    await method.save();
+    res.json({ message: 'Deposit method updated successfully', method });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Delete deposit method
+router.delete('/deposit-methods/:id', adminAuth, async (req, res) => {
+  try {
+    const method = await DepositMethod.findByIdAndDelete(req.params.id);
+    if (!method) return res.status(404).json({ message: 'Method not found' });
+    res.json({ message: 'Deposit method deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
