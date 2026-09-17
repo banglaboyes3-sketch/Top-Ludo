@@ -1,87 +1,484 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Top Ludo - Admin Panel</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: system-ui, sans-serif; background: #0f0f1a; color: #fff; min-height: 100vh; }
-    .container { max-width: 900px; margin: 0 auto; padding: 20px; }
-    h1 { color: #FFD700; margin-bottom: 20px; }
-    .login-box, .panel { background: #1a1a2e; padding: 24px; border-radius: 12px; margin-bottom: 20px; }
-    input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #333; background: #0f0f1a; color: #fff; }
-    button { background: linear-gradient(90deg, #FFD700, #FFA500); color: #000; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 8px; }
-    button:hover { opacity: 0.9; }
-    .btn-sm { padding: 6px 12px; font-size: 13px; margin: 0 4px; }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0a0e1a;
+      color: #fff;
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+
+    /* TOP HEADER */
+    .top-header {
+      position: sticky; top: 0; z-index: 100;
+      background: linear-gradient(180deg, #0d1225 0%, #0a0e1a 100%);
+      border-bottom: 1px solid rgba(255,215,0,0.12);
+      padding: 12px 16px 10px;
+    }
+    .header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .logo-area { display: flex; align-items: center; gap: 10px; }
+    .logo-area img { width: 42px; height: 42px; border-radius: 10px; object-fit: contain; }
+    .logo-text h1 {
+      font-size: 18px; font-weight: 800;
+      background: linear-gradient(90deg, #FFD700, #FFA500);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.1;
+    }
+    .logo-text p { font-size: 11px; color: #8892b0; }
+    .admin-badge {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.06); padding: 6px 12px; border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.08); cursor: pointer;
+    }
+    .admin-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px;
+    }
+    .admin-badge span { font-size: 13px; font-weight: 600; }
+
+    .search-row { display: flex; gap: 10px; align-items: center; }
+    .search-box {
+      flex: 1; display: flex; align-items: center;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px; padding: 10px 14px; gap: 8px;
+    }
+    .search-box input { flex: 1; background: transparent; border: none; color: #fff; font-size: 14px; outline: none; }
+    .search-box input::placeholder { color: #64748b; }
+    .icon-btn {
+      width: 42px; height: 42px; border-radius: 12px;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer;
+    }
+    .icon-btn .badge {
+      position: absolute; top: -4px; right: -4px; background: #ef4444; color: #fff;
+      font-size: 10px; width: 18px; height: 18px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; font-weight: 700;
+    }
+    .date-box {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px; padding: 8px 12px; font-size: 12px; color: #94a3b8; white-space: nowrap;
+    }
+
+    .main { padding: 16px; max-width: 900px; margin: 0 auto; }
+    .section-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; color: #e2e8f0; }
+    .section-sub { font-size: 13px; color: #64748b; margin-bottom: 16px; }
+
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .stat-card { border-radius: 16px; padding: 16px; position: relative; overflow: hidden; }
+    .stat-card.blue { background: linear-gradient(135deg, #1e3a8a, #1e40af); }
+    .stat-card.green { background: linear-gradient(135deg, #065f46, #047857); }
+    .stat-card.red { background: linear-gradient(135deg, #7f1d1d, #b91c1c); }
+    .stat-card.purple { background: linear-gradient(135deg, #4c1d95, #6d28d9); }
+    .stat-icon {
+      width: 40px; height: 40px; border-radius: 12px; background: rgba(255,255,255,0.15);
+      display: flex; align-items: center; justify-content: center; margin-bottom: 10px; font-size: 20px;
+    }
+    .stat-label { font-size: 12px; opacity: 0.85; margin-bottom: 4px; }
+    .stat-value { font-size: 22px; font-weight: 800; }
+    .stat-change { font-size: 11px; margin-top: 6px; opacity: 0.9; color: #86efac; }
+
+    /* Action cards */
+    .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .action-card {
+      border-radius: 16px; padding: 18px 14px; display: flex; flex-direction: column;
+      align-items: flex-start; gap: 8px; cursor: pointer; border: none; color: #fff; text-align: left;
+      transition: transform 0.15s;
+    }
+    .action-card:active { transform: scale(0.97); }
+    .action-card.deposit { background: linear-gradient(135deg, #065f46, #059669); }
+    .action-card.withdraw { background: linear-gradient(135deg, #7f1d1d, #dc2626); }
+    .action-card.matches { background: linear-gradient(135deg, #92400e, #d97706); }
+    .action-card.rom { background: linear-gradient(135deg, #1e3a8a, #3b82f6); }
+    .action-card .ac-icon {
+      width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.2);
+      display: flex; align-items: center; justify-content: center; font-size: 18px;
+    }
+    .action-card .ac-title { font-size: 15px; font-weight: 700; }
+    .action-card .ac-sub { font-size: 12px; opacity: 0.9; }
+
+    /* Chart & Activity */
+    .chart-box, .activity-box {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px; padding: 16px; margin-bottom: 16px;
+    }
+    .chart-header, .activity-header {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+    }
+    .chart-header h3, .activity-header h3 { font-size: 15px; font-weight: 700; }
+    .chart-select {
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+      color: #94a3b8; padding: 6px 10px; border-radius: 8px; font-size: 12px;
+    }
+    .simple-chart { height: 140px; display: flex; align-items: flex-end; gap: 8px; padding-top: 10px; }
+    .bar {
+      flex: 1; background: linear-gradient(180deg, #3b82f6, #1e40af);
+      border-radius: 6px 6px 0 0; position: relative; min-height: 8px;
+    }
+    .bar-label {
+      position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%);
+      font-size: 10px; color: #64748b; white-space: nowrap;
+    }
+    .activity-header a { font-size: 13px; color: #3b82f6; text-decoration: none; }
+    .activity-item {
+      display: flex; align-items: center; gap: 12px; padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .activity-item:last-child { border-bottom: none; }
+    .act-icon {
+      width: 36px; height: 36px; border-radius: 10px; display: flex;
+      align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
+    }
+    .act-icon.green { background: rgba(34,197,94,0.15); color: #22c55e; }
+    .act-icon.blue { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .act-icon.orange { background: rgba(249,115,22,0.15); color: #f97316; }
+    .act-icon.purple { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+    .act-info { flex: 1; }
+    .act-info .title { font-size: 13px; font-weight: 600; }
+    .act-info .sub { font-size: 12px; color: #64748b; margin-top: 2px; }
+    .act-time { font-size: 11px; color: #64748b; }
+
+    /* Pages */
+    .page { display: none; }
+    .page.active { display: block; }
+    .page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .back-btn {
+      width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1); color: #fff; font-size: 18px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .page-header h2 { font-size: 18px; font-weight: 700; }
+
+    .list-card {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px; padding: 14px; margin-bottom: 10px;
+    }
+    .list-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .list-row:last-child { margin-bottom: 0; }
+    .list-name { font-weight: 700; font-size: 14px; }
+    .list-meta { font-size: 12px; color: #94a3b8; }
+    .list-amount { font-weight: 700; color: #FFD700; font-size: 15px; }
+    .btn-group { display: flex; gap: 8px; margin-top: 10px; }
+    .btn {
+      flex: 1; padding: 10px; border: none; border-radius: 10px;
+      font-weight: 700; font-size: 13px; cursor: pointer;
+    }
     .btn-approve { background: #22c55e; color: #fff; }
     .btn-reject { background: #ef4444; color: #fff; }
-    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-    th, td { padding: 10px; text-align: left; border-bottom: 1px solid #333; }
-    th { color: #FFD700; }
-    .hidden { display: none; }
-    .tabs { display: flex; gap: 10px; margin-bottom: 16px; }
-    .tab { padding: 10px 16px; background: #16213e; border-radius: 8px; cursor: pointer; }
-    .tab.active { background: #FFD700; color: #000; }
-    .msg { padding: 10px; border-radius: 8px; margin: 10px 0; }
-    .error { background: #7f1d1d; }
-    .success { background: #14532d; }
-    .form-box { background: #0f0f1a; padding: 16px; border-radius: 10px; margin-bottom: 16px; border: 1px solid #333; }
-    .form-box label { display: block; font-size: 13px; color: #aaa; margin-top: 10px; margin-bottom: 4px; }
-    .form-row { display: flex; gap: 12px; flex-wrap: wrap; }
-    .form-row > div { flex: 1; min-width: 180px; }
-    .method-logo { width: 36px; height: 36px; object-fit: contain; border-radius: 6px; background: #fff; }
-    .status-on { color: #22c55e; font-weight: bold; }
-    .status-off { color: #ef4444; font-weight: bold; }
     .btn-edit { background: #3b82f6; color: #fff; }
     .btn-delete { background: #ef4444; color: #fff; }
-    textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #333; background: #0f0f1a; color: #fff; min-height: 70px; resize: vertical; }
+    .btn-primary {
+      background: linear-gradient(90deg, #FFD700, #FFA500); color: #000;
+      width: 100%; padding: 14px; border: none; border-radius: 12px;
+      font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 8px;
+    }
+    .empty { text-align: center; padding: 40px 20px; color: #64748b; font-size: 14px; }
+
+    /* Form */
+    .form-box {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px; padding: 16px; margin-bottom: 16px;
+    }
+    .form-box label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 4px; margin-top: 10px; }
+    .form-box input, .form-box textarea, .form-box select {
+      width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);
+      background: #0f172a; color: #fff; font-size: 14px;
+    }
+    .form-box textarea { min-height: 70px; resize: vertical; }
+    .form-row { display: flex; gap: 10px; }
+    .form-row > div { flex: 1; }
+    .method-logo { width: 40px; height: 40px; object-fit: contain; border-radius: 8px; background: #fff; }
+    .status-on { color: #22c55e; font-weight: 700; font-size: 12px; }
+    .status-off { color: #ef4444; font-weight: 700; font-size: 12px; }
+    .msg { padding: 10px 12px; border-radius: 8px; margin-top: 10px; font-size: 13px; }
+    .msg.error { background: #7f1d1d; }
+    .msg.success { background: #14532d; }
+
+    /* Toggle Switch */
+    .toggle-card {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px; padding: 16px; margin-bottom: 16px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .toggle-info h4 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .toggle-info p { font-size: 12px; color: #94a3b8; }
+    .switch {
+      position: relative; width: 52px; height: 28px;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background: #475569; border-radius: 28px; transition: 0.3s;
+    }
+    .slider:before {
+      position: absolute; content: ""; height: 22px; width: 22px; left: 3px; bottom: 3px;
+      background: white; border-radius: 50%; transition: 0.3s;
+    }
+    input:checked + .slider { background: #22c55e; }
+    input:checked + .slider:before { transform: translateX(24px); }
+    .auth-status-text { font-size: 13px; font-weight: 700; margin-top: 6px; }
+
+    /* Bottom Nav */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; height: 70px;
+      background: rgba(10,14,26,0.97); backdrop-filter: blur(12px);
+      border-top: 1px solid rgba(255,215,0,0.1);
+      display: flex; justify-content: space-around; align-items: center; z-index: 100;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      color: #64748b; font-size: 11px; font-weight: 500; background: none; border: none;
+      cursor: pointer; padding: 6px 10px; border-radius: 10px; min-width: 60px;
+    }
+    .nav-item.active { color: #FFD700; }
+    .nav-item svg { width: 22px; height: 22px; fill: currentColor; }
+
+    /* Login */
+    .login-screen {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .login-box {
+      width: 100%; max-width: 380px; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,215,0,0.15); border-radius: 20px; padding: 32px 24px;
+    }
+    .login-box h2 {
+      text-align: center; font-size: 22px; margin-bottom: 6px;
+      background: linear-gradient(90deg, #FFD700, #FFA500);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .login-box .sub { text-align: center; color: #64748b; font-size: 13px; margin-bottom: 24px; }
+    .login-box input {
+      width: 100%; padding: 14px; margin-bottom: 12px; border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.1); background: #0f172a; color: #fff; font-size: 15px;
+    }
+    .login-box button {
+      width: 100%; padding: 14px; border: none; border-radius: 12px;
+      background: linear-gradient(90deg, #FFD700, #FFA500); color: #000;
+      font-weight: 700; font-size: 16px; cursor: pointer; margin-top: 8px;
+    }
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1 style="display:flex;align-items:center;gap:10px;"><img src="/logo.png" style="width:40px;height:40px;border-radius:8px;" alt=""> Top Ludo Admin</h1>
 
-    <!-- Login -->
-    <div id="loginBox" class="login-box">
-      <h2>Admin Login</h2>
-      <input type="email" id="email" placeholder="Admin Email" value="admin@topludo.com">
-      <input type="password" id="password" placeholder="Password" value="admin123">
+  <!-- LOGIN -->
+  <div id="loginScreen" class="login-screen">
+    <div class="login-box">
+      <div style="text-align:center;margin-bottom:16px;">
+        <img src="/logo.png" alt="Top Ludo" style="width:80px;height:80px;border-radius:16px;object-fit:contain;">
+      </div>
+      <h2>Top Ludo Admin</h2>
+      <p class="sub">Admin Panel-এ প্রবেশ করুন</p>
+      <input type="email" id="email" placeholder="Admin Email">
+      <input type="password" id="password" placeholder="Password">
       <button onclick="login()">Login</button>
       <div id="loginMsg"></div>
     </div>
+  </div>
 
-    <!-- Panel -->
-    <div id="panel" class="panel hidden">
-      <div class="tabs">
-        <div class="tab active" onclick="showTab('deposits')">Deposits</div>
-        <div class="tab" onclick="showTab('withdraws')">Withdraws</div>
-        <div class="tab" onclick="showTab('users')">Users</div>
-        <div class="tab" onclick="showTab('settings')">Deposit Settings</div>
-        <button class="btn-sm" onclick="logout()" style="margin-left:auto">Logout</button>
+  <!-- MAIN APP -->
+  <div id="app" class="hidden">
+    <div class="top-header">
+      <div class="header-row">
+        <div class="logo-area">
+          <img src="/logo.png" alt="Top Ludo" onerror="this.style.display='none'">
+          <div class="logo-text">
+            <h1>Admin Panel</h1>
+            <p>Top Ludo</p>
+          </div>
+        </div>
+        <div class="admin-badge" onclick="logout()">
+          <div class="admin-avatar">A</div>
+          <span>Admin ▾</span>
+        </div>
+      </div>
+      <div class="search-row">
+        <div class="search-box">
+          <svg width="16" height="16" fill="#64748b" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input type="text" placeholder="Search user, rom code, transaction..." id="searchInput">
+        </div>
+        <div class="icon-btn">
+          <svg width="18" height="18" fill="#94a3b8" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+          <span class="badge" id="notifBadge">0</span>
+        </div>
+        <div class="date-box" id="currentDate"></div>
+      </div>
+    </div>
+
+    <div class="main">
+
+      <!-- DASHBOARD -->
+      <div id="page-dashboard" class="page active">
+        <div class="section-title">Dashboard</div>
+        <div class="section-sub">Welcome to Top Ludo Admin Panel</div>
+
+        <div class="stats-grid">
+          <div class="stat-card blue">
+            <div class="stat-icon">👤</div>
+            <div class="stat-label">Total Users</div>
+            <div class="stat-value" id="statUsers">0</div>
+            <div class="stat-change">↑ Live</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-icon">💰</div>
+            <div class="stat-label">Total Deposit</div>
+            <div class="stat-value" id="statDeposit">৳0</div>
+            <div class="stat-change">↑ Live</div>
+          </div>
+          <div class="stat-card red">
+            <div class="stat-icon">💸</div>
+            <div class="stat-label">Total Withdraw</div>
+            <div class="stat-value" id="statWithdraw">৳0</div>
+            <div class="stat-change">↑ Live</div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-icon">&lt;/&gt;</div>
+            <div class="stat-label">Total Rom Codes</div>
+            <div class="stat-value" id="statRom">0</div>
+            <div class="stat-change">↑ Coming</div>
+          </div>
+        </div>
+
+        <div class="action-grid">
+          <button class="action-card deposit" onclick="showPage('deposits')">
+            <div class="ac-icon">💰</div>
+            <div class="ac-title">Deposit</div>
+            <div class="ac-sub">Pending: <span id="pendingDeposit">0</span></div>
+          </button>
+          <button class="action-card withdraw" onclick="showPage('withdraws')">
+            <div class="ac-icon">💸</div>
+            <div class="ac-title">Withdraw</div>
+            <div class="ac-sub">Pending: <span id="pendingWithdraw">0</span></div>
+          </button>
+          <button class="action-card matches" onclick="showPage('matches')">
+            <div class="ac-icon">🏆</div>
+            <div class="ac-title">Matches</div>
+            <div class="ac-sub">Join & Play</div>
+          </button>
+          <button class="action-card rom" onclick="showPage('romcodes')">
+            <div class="ac-icon">&lt;/&gt;</div>
+            <div class="ac-title">Rom Codes</div>
+            <div class="ac-sub">Generate & Manage</div>
+          </button>
+        </div>
+
+        <div class="chart-box">
+          <div class="chart-header">
+            <h3>📈 User Growth</h3>
+            <select class="chart-select"><option>Last 7 Days</option></select>
+          </div>
+          <div class="simple-chart">
+            <div class="bar" style="height:30%"><span class="bar-label">10</span></div>
+            <div class="bar" style="height:40%"><span class="bar-label">11</span></div>
+            <div class="bar" style="height:45%"><span class="bar-label">12</span></div>
+            <div class="bar" style="height:55%"><span class="bar-label">13</span></div>
+            <div class="bar" style="height:60%"><span class="bar-label">14</span></div>
+            <div class="bar" style="height:70%"><span class="bar-label">15</span></div>
+            <div class="bar" style="height:85%"><span class="bar-label">16</span></div>
+          </div>
+        </div>
+
+        <div class="activity-box">
+          <div class="activity-header">
+            <h3>⚡ Recent Activities</h3>
+            <a href="#" onclick="showPage('deposits');return false;">View All</a>
+          </div>
+          <div id="recentActivities">
+            <div class="activity-item">
+              <div class="act-icon green">✅</div>
+              <div class="act-info">
+                <div class="title">Loading...</div>
+                <div class="sub">Please wait</div>
+              </div>
+              <div class="act-time">-</div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div id="depositsTab">
-        <h3>Pending Deposits</h3>
-        <div id="depositsList">Loading...</div>
-      </div>
-      <div id="withdrawsTab" class="hidden">
-        <h3>Pending Withdraws</h3>
-        <div id="withdrawsList">Loading...</div>
-      </div>
-      <div id="usersTab" class="hidden">
-        <h3>All Users</h3>
-        <div id="usersList">Loading...</div>
+      <!-- DEPOSITS -->
+      <div id="page-deposits" class="page">
+        <div class="page-header">
+          <button class="back-btn" onclick="showPage('dashboard')">←</button>
+          <h2>Pending Deposits</h2>
+        </div>
+        <div id="depositsList"><div class="empty">Loading...</div></div>
       </div>
 
-      <!-- Deposit Settings Tab -->
-      <div id="settingsTab" class="hidden">
-        <h3>Deposit Settings</h3>
-        <p style="color:#aaa;font-size:13px;margin-bottom:12px;">এখানে bKash, Nagad, Rocket ইত্যাদি পেমেন্ট মেথড যোগ/এডিট/ডিলিট করতে পারবেন।</p>
+      <!-- WITHDRAWS -->
+      <div id="page-withdraws" class="page">
+        <div class="page-header">
+          <button class="back-btn" onclick="showPage('dashboard')">←</button>
+          <h2>Pending Withdraws</h2>
+        </div>
+        <div id="withdrawsList"><div class="empty">Loading...</div></div>
+      </div>
 
-        <!-- Add / Edit Form -->
+      <!-- USERS -->
+      <div id="page-users" class="page">
+        <div class="page-header">
+          <button class="back-btn" onclick="showPage('dashboard')">←</button>
+          <h2>All Users</h2>
+        </div>
+        <div id="usersList"><div class="empty">Loading...</div></div>
+      </div>
+
+      <!-- MATCHES -->
+      <div id="page-matches" class="page">
+        <div class="page-header">
+          <button class="back-btn" onclick="showPage('dashboard')">←</button>
+          <h2>Matches</h2>
+        </div>
+        <div class="empty">
+          <div style="font-size:40px;margin-bottom:12px;">🏆</div>
+          Matches system coming soon.<br>এখানে Room Code ভিত্তিক ম্যাচ ম্যানেজ করা যাবে।
+        </div>
+      </div>
+
+      <!-- ROM CODES -->
+      <div id="page-romcodes" class="page">
+        <div class="page-header">
+          <button class="back-btn" onclick="showPage('dashboard')">←</button>
+          <h2>Rom Codes</h2>
+        </div>
+        <div class="empty">
+          <div style="font-size:40px;margin-bottom:12px;">&lt;/&gt;</div>
+          Rom Code system coming soon.<br>এখানে Room Code জেনারেট ও ম্যানেজ করা যাবে।
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div id="page-settings" class="page">
+        <div class="page-header">
+          <button class="back-btn" onclick="showPage('dashboard')">←</button>
+          <h2>Settings</h2>
+        </div>
+
+        <!-- Auth On/Off Toggle -->
+        <div class="toggle-card">
+          <div class="toggle-info">
+            <h4>Login & Signup System</h4>
+            <p>ইউজার লগইন ও রেজিস্টার চালু/বন্ধ করুন</p>
+            <div class="auth-status-text" id="authStatusText">Loading...</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="authToggle" onchange="toggleAuth()">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <h3 style="color:#FFD700;font-size:16px;margin:20px 0 12px;">Deposit Settings</h3>
+        <p style="color:#94a3b8;font-size:13px;margin-bottom:14px;">bKash, Nagad, Rocket ইত্যাদি পেমেন্ট মেথড যোগ/এডিট করুন।</p>
+
         <div class="form-box">
-          <h4 id="formTitle" style="color:#FFD700;margin-bottom:8px;">নতুন মেথড যোগ করুন</h4>
+          <h4 id="formTitle" style="color:#FFD700;font-size:15px;">নতুন মেথড যোগ করুন</h4>
           <input type="hidden" id="editId" value="">
           <div class="form-row">
             <div>
@@ -95,267 +492,390 @@
           </div>
           <div class="form-row">
             <div>
-              <label>লোগো URL (Logo URL)</label>
-              <input type="text" id="methodLogo" placeholder="https://example.com/logo.png">
+              <label>লোগো URL</label>
+              <input type="text" id="methodLogo" placeholder="https://...">
             </div>
             <div>
               <label>স্ট্যাটাস</label>
-              <select id="methodActive" style="width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #333;background:#0f0f1a;color:#fff;">
+              <select id="methodActive">
                 <option value="true">Active (চালু)</option>
                 <option value="false">Inactive (বন্ধ)</option>
               </select>
             </div>
           </div>
-          <label>ইনস্ট্রাকশন (Instructions)</label>
-          <textarea id="methodInstructions" placeholder="যেমন: শুধু Personal নম্বরে টাকা পাঠাবেন। Send Money করবেন।"></textarea>
-          <div style="display:flex;gap:10px;margin-top:8px;">
-            <button onclick="saveMethod()" id="saveBtn">যোগ করুন</button>
-            <button onclick="resetForm()" class="btn-sm" style="background:#555;color:#fff;display:none;" id="cancelBtn">Cancel</button>
-          </div>
+          <label>ইনস্ট্রাকশন</label>
+          <textarea id="methodInstructions" placeholder="শুধু Personal নম্বরে Send Money করবেন।"></textarea>
+          <button class="btn-primary" onclick="saveMethod()" id="saveBtn">যোগ করুন</button>
+          <button class="btn btn-edit" style="margin-top:8px;display:none;" id="cancelBtn" onclick="resetForm()">Cancel</button>
           <div id="settingsMsg"></div>
         </div>
 
-        <!-- Methods List -->
-        <h4 style="margin-top:20px;color:#FFD700;">বর্তমান মেথডসমূহ</h4>
-        <div id="methodsList">Loading...</div>
+        <h4 style="color:#FFD700;margin:16px 0 10px;font-size:15px;">বর্তমান মেথডসমূহ</h4>
+        <div id="methodsList"><div class="empty">Loading...</div></div>
       </div>
+
+      <!-- TRANSACTIONS & REPORTS -->
+      <div id="page-transactions" class="page">
+        <div class="page-header">
+          <button class="back-btn" onclick="showPage('dashboard')">←</button>
+          <h2>Transactions</h2>
+        </div>
+        <div class="empty">Transactions history coming soon.</div>
+      </div>
+      <div id="page-reports" class="page">
+        <div class="page-header">
+          <button class="back-btn" onclick="showPage('dashboard')">←</button>
+          <h2>Reports</h2>
+        </div>
+        <div class="empty">Reports coming soon.</div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="bottom-nav">
+      <button class="nav-item active" data-page="dashboard" onclick="showPage('dashboard')">
+        <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        <span>Dashboard</span>
+      </button>
+      <button class="nav-item" data-page="users" onclick="showPage('users')">
+        <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+        <span>Users</span>
+      </button>
+      <button class="nav-item" data-page="transactions" onclick="showPage('transactions')">
+        <svg viewBox="0 0 24 24"><path d="M9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4zm2 2H5V5h14v14z"/></svg>
+        <span>Transactions</span>
+      </button>
+      <button class="nav-item" data-page="reports" onclick="showPage('reports')">
+        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+        <span>Reports</span>
+      </button>
+      <button class="nav-item" data-page="settings" onclick="showPage('settings')">
+        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+        <span>Settings</span>
+      </button>
     </div>
   </div>
 
-  <script>
-    const API = window.location.origin + '/api/admin';
-    let token = localStorage.getItem('adminToken');
+<script>
+  const API = window.location.origin + '/api/admin';
+  let token = localStorage.getItem('adminToken');
 
-    if (token) {
-      document.getElementById('loginBox').classList.add('hidden');
-      document.getElementById('panel').classList.remove('hidden');
-      loadDeposits();
+  const now = new Date();
+  document.getElementById('currentDate').textContent = now.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }) + ' ' + now.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+
+  if (token) {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    loadDashboard();
+  }
+
+  async function login() {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const msg = document.getElementById('loginMsg');
+    try {
+      const res = await fetch(API + '/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Login failed');
+      token = data.token;
+      localStorage.setItem('adminToken', token);
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+      loadDashboard();
+    } catch (e) {
+      msg.innerHTML = `<div class="msg error">${e.message}</div>`;
     }
+  }
 
-    async function login() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const msg = document.getElementById('loginMsg');
-      try {
-        const res = await fetch(API + '/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message);
-        token = data.token;
-        localStorage.setItem('adminToken', token);
-        document.getElementById('loginBox').classList.add('hidden');
-        document.getElementById('panel').classList.remove('hidden');
-        loadDeposits();
-      } catch (e) {
-        msg.innerHTML = `<div class="msg error">${e.message}</div>`;
-      }
-    }
-
-    function logout() {
+  function logout() {
+    if (confirm('Logout করতে চান?')) {
       localStorage.removeItem('adminToken');
       location.reload();
     }
+  }
 
-    function showTab(name) {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      event.target.classList.add('active');
-      document.getElementById('depositsTab').classList.add('hidden');
-      document.getElementById('withdrawsTab').classList.add('hidden');
-      document.getElementById('usersTab').classList.add('hidden');
-      document.getElementById('settingsTab').classList.add('hidden');
-      document.getElementById(name + 'Tab').classList.remove('hidden');
-      if (name === 'deposits') loadDeposits();
-      if (name === 'withdraws') loadWithdraws();
-      if (name === 'users') loadUsers();
-      if (name === 'settings') loadMethods();
-    }
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const page = document.getElementById('page-' + name);
+    if (page) page.classList.add('active');
 
-    async function loadDeposits() {
-      const el = document.getElementById('depositsList');
-      try {
-        const res = await fetch(API + '/deposits', { headers: { Authorization: 'Bearer ' + token } });
-        const data = await res.json();
-        if (!data.length) { el.innerHTML = '<p>No pending deposits</p>'; return; }
-        el.innerHTML = `<table><tr><th>Name</th><th>Phone</th><th>Amount</th><th>Txn ID</th><th>Action</th></tr>
-          ${data.map(d => `<tr>
-            <td>${d.name}</td><td>${d.phone}</td><td>৳${d.amount}</td><td>${d.transactionId || '-'}</td>
-            <td>
-              <button class="btn-sm btn-approve" onclick="depositAction('${d.userId}',${d.requestIndex},'approve')">Approve</button>
-              <button class="btn-sm btn-reject" onclick="depositAction('${d.userId}',${d.requestIndex},'reject')">Reject</button>
-            </td>
-          </tr>`).join('')}</table>`;
-      } catch (e) { el.innerHTML = '<p class="error">Failed to load</p>'; }
-    }
+    document.querySelectorAll('.nav-item').forEach(n => {
+      n.classList.toggle('active', n.dataset.page === name);
+    });
 
-    async function depositAction(userId, requestIndex, action) {
-      await fetch(API + '/deposit-action', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-        body: JSON.stringify({ userId, requestIndex, action })
-      });
-      loadDeposits();
-    }
+    if (name === 'dashboard') loadDashboard();
+    if (name === 'deposits') loadDeposits();
+    if (name === 'withdraws') loadWithdraws();
+    if (name === 'users') loadUsers();
+    if (name === 'settings') { loadMethods(); loadAuthStatus(); }
+  }
 
-    async function loadWithdraws() {
-      const el = document.getElementById('withdrawsList');
-      try {
-        const res = await fetch(API + '/withdraws', { headers: { Authorization: 'Bearer ' + token } });
-        const data = await res.json();
-        if (!data.length) { el.innerHTML = '<p>No pending withdraws</p>'; return; }
-        el.innerHTML = `<table><tr><th>Name</th><th>Phone</th><th>Amount</th><th>Account</th><th>Balance</th><th>Action</th></tr>
-          ${data.map(d => `<tr>
-            <td>${d.name}</td><td>${d.phone}</td><td>৳${d.amount}</td><td>${d.accountNumber}</td><td>৳${d.balance}</td>
-            <td>
-              <button class="btn-sm btn-approve" onclick="withdrawAction('${d.userId}',${d.requestIndex},'approve')">Approve</button>
-              <button class="btn-sm btn-reject" onclick="withdrawAction('${d.userId}',${d.requestIndex},'reject')">Reject</button>
-            </td>
-          </tr>`).join('')}</table>`;
-      } catch (e) { el.innerHTML = '<p class="error">Failed to load</p>'; }
-    }
+  // DASHBOARD
+  async function loadDashboard() {
+    try {
+      const usersRes = await fetch(API + '/users', { headers: { Authorization: 'Bearer ' + token } });
+      const users = await usersRes.json();
+      document.getElementById('statUsers').textContent = users.length || 0;
 
-    async function withdrawAction(userId, requestIndex, action) {
-      await fetch(API + '/withdraw-action', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-        body: JSON.stringify({ userId, requestIndex, action })
-      });
-      loadWithdraws();
-    }
+      const depRes = await fetch(API + '/deposits', { headers: { Authorization: 'Bearer ' + token } });
+      const deposits = await depRes.json();
+      document.getElementById('pendingDeposit').textContent = deposits.length || 0;
 
-    async function loadUsers() {
-      const el = document.getElementById('usersList');
-      try {
-        const res = await fetch(API + '/users', { headers: { Authorization: 'Bearer ' + token } });
-        const data = await res.json();
-        el.innerHTML = `<table><tr><th>Name</th><th>Phone</th><th>Balance</th><th>Joined</th></tr>
-          ${data.map(u => `<tr><td>${u.name}</td><td>${u.phone}</td><td>৳${u.balance}</td><td>${new Date(u.createdAt).toLocaleDateString()}</td></tr>`).join('')}</table>`;
-      } catch (e) { el.innerHTML = '<p class="error">Failed to load</p>'; }
-    }
+      const witRes = await fetch(API + '/withdraws', { headers: { Authorization: 'Bearer ' + token } });
+      const withdraws = await witRes.json();
+      document.getElementById('pendingWithdraw').textContent = withdraws.length || 0;
+      document.getElementById('notifBadge').textContent = (deposits.length || 0) + (withdraws.length || 0);
 
-    // ====================== DEPOSIT SETTINGS ======================
+      let totalBal = 0;
+      users.forEach(u => totalBal += (u.balance || 0));
+      document.getElementById('statDeposit').textContent = '৳' + totalBal.toLocaleString();
+      document.getElementById('statWithdraw').textContent = '৳0';
+      document.getElementById('statRom').textContent = '0';
 
-    async function loadMethods() {
-      const el = document.getElementById('methodsList');
-      try {
-        const res = await fetch(API + '/deposit-methods', { headers: { Authorization: 'Bearer ' + token } });
-        const data = await res.json();
-        if (!data.length) {
-          el.innerHTML = '<p style="color:#aaa;margin-top:10px;">এখনো কোনো মেথড যোগ করা হয়নি।</p>';
-          return;
-        }
-        el.innerHTML = `<table>
-          <tr>
-            <th>Logo</th>
-            <th>Name</th>
-            <th>Number</th>
-            <th>Instructions</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-          ${data.map(m => `
-            <tr>
-              <td>${m.logo ? `<img src="${m.logo}" class="method-logo" onerror="this.style.display='none'">` : '-'}</td>
-              <td><strong>${m.name}</strong></td>
-              <td>${m.number}</td>
-              <td style="max-width:200px;font-size:12px;color:#ccc;">${m.instructions || '-'}</td>
-              <td class="${m.isActive ? 'status-on' : 'status-off'}">${m.isActive ? 'Active' : 'Inactive'}</td>
-              <td>
-                <button class="btn-sm btn-edit" onclick='editMethod(${JSON.stringify(m)})'>Edit</button>
-                <button class="btn-sm btn-delete" onclick="deleteMethod('${m._id}')">Delete</button>
-              </td>
-            </tr>
-          `).join('')}
-        </table>`;
-      } catch (e) {
-        el.innerHTML = '<p class="error">Failed to load methods</p>';
-      }
-    }
-
-    function resetForm() {
-      document.getElementById('editId').value = '';
-      document.getElementById('methodName').value = '';
-      document.getElementById('methodNumber').value = '';
-      document.getElementById('methodLogo').value = '';
-      document.getElementById('methodInstructions').value = '';
-      document.getElementById('methodActive').value = 'true';
-      document.getElementById('formTitle').textContent = 'নতুন মেথড যোগ করুন';
-      document.getElementById('saveBtn').textContent = 'যোগ করুন';
-      document.getElementById('cancelBtn').style.display = 'none';
-      document.getElementById('settingsMsg').innerHTML = '';
-    }
-
-    function editMethod(m) {
-      document.getElementById('editId').value = m._id;
-      document.getElementById('methodName').value = m.name || '';
-      document.getElementById('methodNumber').value = m.number || '';
-      document.getElementById('methodLogo').value = m.logo || '';
-      document.getElementById('methodInstructions').value = m.instructions || '';
-      document.getElementById('methodActive').value = m.isActive ? 'true' : 'false';
-      document.getElementById('formTitle').textContent = 'মেথড এডিট করুন';
-      document.getElementById('saveBtn').textContent = 'আপডেট করুন';
-      document.getElementById('cancelBtn').style.display = 'inline-block';
-      document.getElementById('settingsMsg').innerHTML = '';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    async function saveMethod() {
-      const id = document.getElementById('editId').value;
-      const name = document.getElementById('methodName').value.trim();
-      const number = document.getElementById('methodNumber').value.trim();
-      const logo = document.getElementById('methodLogo').value.trim();
-      const instructions = document.getElementById('methodInstructions').value.trim();
-      const isActive = document.getElementById('methodActive').value === 'true';
-      const msg = document.getElementById('settingsMsg');
-
-      if (!name || !number) {
-        msg.innerHTML = '<div class="msg error">নাম এবং নম্বর আবশ্যক</div>';
-        return;
-      }
-
-      try {
-        let res;
-        if (id) {
-          // Update
-          res = await fetch(API + '/deposit-methods/' + id, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-            body: JSON.stringify({ name, number, logo, instructions, isActive })
-          });
-        } else {
-          // Add
-          res = await fetch(API + '/deposit-methods', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-            body: JSON.stringify({ name, number, logo, instructions, isActive })
-          });
-        }
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Failed');
-        msg.innerHTML = `<div class="msg success">${data.message}</div>`;
-        resetForm();
-        loadMethods();
-      } catch (e) {
-        msg.innerHTML = `<div class="msg error">${e.message}</div>`;
-      }
-    }
-
-    async function deleteMethod(id) {
-      if (!confirm('আপনি কি এই মেথড ডিলিট করতে চান?')) return;
-      try {
-        const res = await fetch(API + '/deposit-methods/' + id, {
-          method: 'DELETE',
-          headers: { Authorization: 'Bearer ' + token }
+      let activities = '';
+      if (deposits.length) {
+        deposits.slice(0, 3).forEach(d => {
+          activities += `<div class="activity-item">
+            <div class="act-icon blue">💰</div>
+            <div class="act-info"><div class="title">Deposit request</div><div class="sub">৳${d.amount} from ${d.name}</div></div>
+            <div class="act-time">Pending</div></div>`;
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Failed');
-        loadMethods();
-      } catch (e) {
-        alert(e.message);
       }
+      if (withdraws.length) {
+        withdraws.slice(0, 2).forEach(w => {
+          activities += `<div class="activity-item">
+            <div class="act-icon orange">💸</div>
+            <div class="act-info"><div class="title">Withdraw request</div><div class="sub">৳${w.amount} from ${w.name}</div></div>
+            <div class="act-time">Pending</div></div>`;
+        });
+      }
+      if (!activities) {
+        activities = `<div class="activity-item">
+          <div class="act-icon green">✅</div>
+          <div class="act-info"><div class="title">No pending activities</div><div class="sub">All clear</div></div>
+          <div class="act-time">Now</div></div>`;
+      }
+      document.getElementById('recentActivities').innerHTML = activities;
+    } catch (e) { console.log(e); }
+  }
+
+  // DEPOSITS
+  async function loadDeposits() {
+    const el = document.getElementById('depositsList');
+    try {
+      const res = await fetch(API + '/deposits', { headers: { Authorization: 'Bearer ' + token } });
+      const data = await res.json();
+      if (!data.length) { el.innerHTML = '<div class="empty">কোনো Pending Deposit নেই</div>'; return; }
+      el.innerHTML = data.map(d => `
+        <div class="list-card">
+          <div class="list-row">
+            <div><div class="list-name">${d.name}</div><div class="list-meta">${d.phone} • ${d.method || 'bkash'}</div></div>
+            <div class="list-amount">৳${d.amount}</div>
+          </div>
+          <div class="list-meta" style="margin-top:4px;">Txn: ${d.transactionId || '-'}</div>
+          <div class="btn-group">
+            <button class="btn btn-approve" onclick="depositAction('${d.userId}',${d.requestIndex},'approve')">Approve</button>
+            <button class="btn btn-reject" onclick="depositAction('${d.userId}',${d.requestIndex},'reject')">Reject</button>
+          </div>
+        </div>`).join('');
+    } catch (e) { el.innerHTML = '<div class="empty">Failed to load</div>'; }
+  }
+
+  async function depositAction(userId, requestIndex, action) {
+    await fetch(API + '/deposit-action', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ userId, requestIndex, action })
+    });
+    loadDeposits(); loadDashboard();
+  }
+
+  // WITHDRAWS
+  async function loadWithdraws() {
+    const el = document.getElementById('withdrawsList');
+    try {
+      const res = await fetch(API + '/withdraws', { headers: { Authorization: 'Bearer ' + token } });
+      const data = await res.json();
+      if (!data.length) { el.innerHTML = '<div class="empty">কোনো Pending Withdraw নেই</div>'; return; }
+      el.innerHTML = data.map(d => `
+        <div class="list-card">
+          <div class="list-row">
+            <div><div class="list-name">${d.name}</div><div class="list-meta">${d.phone} • Balance: ৳${d.balance}</div></div>
+            <div class="list-amount">৳${d.amount}</div>
+          </div>
+          <div class="list-meta" style="margin-top:4px;">Account: ${d.accountNumber} (${d.method || 'bkash'})</div>
+          <div class="btn-group">
+            <button class="btn btn-approve" onclick="withdrawAction('${d.userId}',${d.requestIndex},'approve')">Approve</button>
+            <button class="btn btn-reject" onclick="withdrawAction('${d.userId}',${d.requestIndex},'reject')">Reject</button>
+          </div>
+        </div>`).join('');
+    } catch (e) { el.innerHTML = '<div class="empty">Failed to load</div>'; }
+  }
+
+  async function withdrawAction(userId, requestIndex, action) {
+    await fetch(API + '/withdraw-action', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ userId, requestIndex, action })
+    });
+    loadWithdraws(); loadDashboard();
+  }
+
+  // USERS
+  async function loadUsers() {
+    const el = document.getElementById('usersList');
+    try {
+      const res = await fetch(API + '/users', { headers: { Authorization: 'Bearer ' + token } });
+      const data = await res.json();
+      if (!data.length) { el.innerHTML = '<div class="empty">কোনো ইউজার নেই</div>'; return; }
+      el.innerHTML = data.map(u => `
+        <div class="list-card">
+          <div class="list-row">
+            <div><div class="list-name">${u.name}</div><div class="list-meta">${u.phone} • ${u.email || ''}</div></div>
+            <div class="list-amount">৳${u.balance || 0}</div>
+          </div>
+          <div class="list-meta" style="margin-top:4px;">Joined: ${new Date(u.createdAt).toLocaleDateString()}</div>
+        </div>`).join('');
+    } catch (e) { el.innerHTML = '<div class="empty">Failed to load</div>'; }
+  }
+
+  // AUTH ON/OFF
+  async function loadAuthStatus() {
+    try {
+      const res = await fetch(API + '/auth-status', { headers: { Authorization: 'Bearer ' + token } });
+      const data = await res.json();
+      const enabled = data.authEnabled;
+      document.getElementById('authToggle').checked = enabled;
+      const text = document.getElementById('authStatusText');
+      if (enabled) {
+        text.textContent = '● Currently ON — ইউজার লগইন/রেজিস্টার করতে পারবে';
+        text.style.color = '#22c55e';
+      } else {
+        text.textContent = '● Currently OFF — ইউজার লগইন/রেজিস্টার করতে পারবে না';
+        text.style.color = '#ef4444';
+      }
+    } catch (e) {
+      document.getElementById('authStatusText').textContent = 'Failed to load status';
     }
-  </script>
+  }
+
+  async function toggleAuth() {
+    const enabled = document.getElementById('authToggle').checked;
+    try {
+      const res = await fetch(API + '/auth-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ authEnabled: enabled })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      loadAuthStatus();
+      alert(data.message);
+    } catch (e) {
+      alert(e.message);
+      loadAuthStatus();
+    }
+  }
+
+  // DEPOSIT METHODS
+  async function loadMethods() {
+    const el = document.getElementById('methodsList');
+    try {
+      const res = await fetch(API + '/deposit-methods', { headers: { Authorization: 'Bearer ' + token } });
+      const data = await res.json();
+      if (!data.length) { el.innerHTML = '<div class="empty">এখনো কোনো মেথড যোগ করা হয়নি</div>'; return; }
+      el.innerHTML = data.map(m => `
+        <div class="list-card">
+          <div class="list-row">
+            <div style="display:flex;align-items:center;gap:10px;">
+              ${m.logo ? `<img src="${m.logo}" class="method-logo" onerror="this.style.display='none'">` : ''}
+              <div><div class="list-name">${m.name}</div><div class="list-meta">${m.number}</div></div>
+            </div>
+            <div class="${m.isActive ? 'status-on' : 'status-off'}">${m.isActive ? 'Active' : 'Inactive'}</div>
+          </div>
+          ${m.instructions ? `<div class="list-meta" style="margin-top:6px;">${m.instructions}</div>` : ''}
+          <div class="btn-group">
+            <button class="btn btn-edit" onclick='editMethod(${JSON.stringify(m)})'>Edit</button>
+            <button class="btn btn-delete" onclick="deleteMethod('${m._id}')">Delete</button>
+          </div>
+        </div>`).join('');
+    } catch (e) { el.innerHTML = '<div class="empty">Failed to load methods</div>'; }
+  }
+
+  function resetForm() {
+    document.getElementById('editId').value = '';
+    document.getElementById('methodName').value = '';
+    document.getElementById('methodNumber').value = '';
+    document.getElementById('methodLogo').value = '';
+    document.getElementById('methodInstructions').value = '';
+    document.getElementById('methodActive').value = 'true';
+    document.getElementById('formTitle').textContent = 'নতুন মেথড যোগ করুন';
+    document.getElementById('saveBtn').textContent = 'যোগ করুন';
+    document.getElementById('cancelBtn').style.display = 'none';
+    document.getElementById('settingsMsg').innerHTML = '';
+  }
+
+  function editMethod(m) {
+    document.getElementById('editId').value = m._id;
+    document.getElementById('methodName').value = m.name || '';
+    document.getElementById('methodNumber').value = m.number || '';
+    document.getElementById('methodLogo').value = m.logo || '';
+    document.getElementById('methodInstructions').value = m.instructions || '';
+    document.getElementById('methodActive').value = m.isActive ? 'true' : 'false';
+    document.getElementById('formTitle').textContent = 'মেথড এডিট করুন';
+    document.getElementById('saveBtn').textContent = 'আপডেট করুন';
+    document.getElementById('cancelBtn').style.display = 'block';
+    document.getElementById('settingsMsg').innerHTML = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  async function saveMethod() {
+    const id = document.getElementById('editId').value;
+    const name = document.getElementById('methodName').value.trim();
+    const number = document.getElementById('methodNumber').value.trim();
+    const logo = document.getElementById('methodLogo').value.trim();
+    const instructions = document.getElementById('methodInstructions').value.trim();
+    const isActive = document.getElementById('methodActive').value === 'true';
+    const msg = document.getElementById('settingsMsg');
+    if (!name || !number) { msg.innerHTML = '<div class="msg error">নাম এবং নম্বর আবশ্যক</div>'; return; }
+    try {
+      let res;
+      if (id) {
+        res = await fetch(API + '/deposit-methods/' + id, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ name, number, logo, instructions, isActive })
+        });
+      } else {
+        res = await fetch(API + '/deposit-methods', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ name, number, logo, instructions, isActive })
+        });
+      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed');
+      msg.innerHTML = `<div class="msg success">${data.message}</div>`;
+      resetForm(); loadMethods();
+    } catch (e) { msg.innerHTML = `<div class="msg error">${e.message}</div>`; }
+  }
+
+  async function deleteMethod(id) {
+    if (!confirm('এই মেথড ডিলিট করতে চান?')) return;
+    try {
+      const res = await fetch(API + '/deposit-methods/' + id, {
+        method: 'DELETE', headers: { Authorization: 'Bearer ' + token }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed');
+      loadMethods();
+    } catch (e) { alert(e.message); }
+  }
+</script>
 </body>
 </html>

@@ -3,6 +3,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const User = require('./User');
 const DepositMethod = require('./DepositMethod');
+const Settings = require('./Settings');
 
 // Admin Login
 router.post('/login', async (req, res) => {
@@ -212,6 +213,42 @@ router.delete('/deposit-methods/:id', adminAuth, async (req, res) => {
     res.json({ message: 'Deposit method deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// ====================== AUTH SYSTEM ON/OFF ======================
+
+// Get auth status (Login & Signup)
+router.get('/auth-status', adminAuth, async (req, res) => {
+  try {
+    let setting = await Settings.findOne({ key: 'authEnabled' });
+    if (!setting) {
+      // Default ON
+      setting = await Settings.create({ key: 'authEnabled', value: true });
+    }
+    res.json({ authEnabled: setting.value === true || setting.value === 'true' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Update auth status (Login & Signup On/Off)
+router.post('/auth-status', adminAuth, async (req, res) => {
+  try {
+    const { authEnabled } = req.body;
+    let setting = await Settings.findOne({ key: 'authEnabled' });
+    if (!setting) {
+      setting = new Settings({ key: 'authEnabled', value: !!authEnabled });
+    } else {
+      setting.value = !!authEnabled;
+    }
+    await setting.save();
+    res.json({
+      message: authEnabled ? 'Login & Signup is now ON' : 'Login & Signup is now OFF',
+      authEnabled: !!authEnabled
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 

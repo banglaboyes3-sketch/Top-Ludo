@@ -3,8 +3,20 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const User = require('./User');
+const Settings = require('./Settings');
 
 const otpStore = new Map();
+
+// Check if Login & Signup is enabled by Admin
+async function isAuthEnabled() {
+  try {
+    const setting = await Settings.findOne({ key: 'authEnabled' });
+    if (!setting) return true; // default ON
+    return setting.value === true || setting.value === 'true';
+  } catch {
+    return true;
+  }
+}
 
 function generateOTP() {
   return String(Math.floor(100000 + Math.random() * 900000));
@@ -84,6 +96,12 @@ async function sendOTPEmail(email, otp) {
 // ====================== REGISTER OTP ======================
 router.post('/register-otp', async (req, res) => {
   try {
+    // Check Admin On/Off
+    const enabled = await isAuthEnabled();
+    if (!enabled) {
+      return res.status(403).json({ message: 'Login & Signup is currently OFF by Admin. Please try later.' });
+    }
+
     const { name, phone, email } = req.body;
     if (!name || !phone || !email) {
       return res.status(400).json({ message: 'Name, phone and email required' });
@@ -123,6 +141,12 @@ router.post('/register-otp', async (req, res) => {
 // ====================== LOGIN OTP ======================
 router.post('/login-otp', async (req, res) => {
   try {
+    // Check Admin On/Off
+    const enabled = await isAuthEnabled();
+    if (!enabled) {
+      return res.status(403).json({ message: 'Login & Signup is currently OFF by Admin. Please try later.' });
+    }
+
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: 'Email required' });
 
